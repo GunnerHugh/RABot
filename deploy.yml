@@ -18,7 +18,7 @@ jobs:
         with:
           heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
           heroku_app_name: "glacial-shore-34113"
-          heroku_email: "your_email@example.com"
+          heroku_email: "ghyuk.ko@gmail.com"
 
       - name: Set environment variables
         run: |
