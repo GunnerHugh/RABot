@@ -13,8 +13,8 @@ load_dotenv()
 GPT_API_KEY = os.getenv('GPT_API_KEY')
 # 텔레그램 봇 토큰
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
-# 텔레그램 봇 사용자 이름
-BOT_USERNAME = "@GunnerHughBot"
+# 텔레그램 사용자 ID (인증용)
+USER_ID = int(os.getenv('TELEGRAM_USER_ID', 0))
 
 # Enable logging
 logging.basicConfig(
@@ -38,18 +38,18 @@ def get_gpt_response(prompt, api_key):
     response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=data)
     return response.json()['choices'][0]['message']['content'].strip()
 
-def auth(bot_username):
+def auth(user_id):
     def decorator(func):
         @wraps(func)
         async def wrapper(update, context):
-            if update.effective_user.username == bot_username:
+            if update.effective_user.id == user_id:
                 await func(update, context)
             else:
                 await update.message.reply_text("You are not authorized to use this bot")
         return wrapper
     return decorator
 
-@auth(BOT_USERNAME)
+@auth(USER_ID)
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
     user = update.effective_user
@@ -58,5 +58,34 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         reply_markup=ForceReply(selective=True),
     )
 
-@auth(BOT_USERNAME)
-​⬤
+@auth(USER_ID)
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send a message when the command /help is issued."""
+    await update.message.reply_text("Help!")
+
+@auth(USER_ID)
+async def reload(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send a message when the command /reload is issued."""
+    await update.message.reply_text("Reloaded the bot!")
+
+@auth(USER_ID)
+async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Echo the user message."""
+    user_message = update.message.text
+    response = get_gpt_response(user_message, GPT_API_KEY)
+    await update.message.reply_text(response)
+
+def main():
+    # on different commands - answer in Telegram
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("help", help_command))
+    application.add_handler(CommandHandler("reload", reload))
+    
+    # on non command i.e message - echo the message on Telegram
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, echo))
+
+    # Run the bot until the user presses Ctrl-C
+    application.run_polling()
+
+if __name__ == "__main__":
+    main()
