@@ -1,0 +1,30 @@
+name: Deploy to Heroku
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_app_name: "glacial-shore-34113"
+          heroku_email: "ghyuk.ko@gmail.com"
+
+      - name: Set environment variables
+        run: |
+          heroku config:set GPT_API_KEY=${{ secrets.GPT_API_KEY }} --app glacial-shore-34113
+          heroku config:set TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }} --app glacial-shore-34113
+          heroku config:set TELEGRAM_USER_ID=${{ secrets.TELEGRAM_USER_ID }} --app glacial-shore-34113
+
+      - name: Deploy to Heroku
+        run: git push heroku main
